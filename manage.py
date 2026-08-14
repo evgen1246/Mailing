@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 import os
 import sys
 
 
-sys.stdout.reconfigure(encoding='utf-8')
+
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
