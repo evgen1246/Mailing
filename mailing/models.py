@@ -1,5 +1,6 @@
 from django.db import models
-
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 class Recipient(models.Model):
     """
@@ -75,10 +76,18 @@ class Mailing(models.Model):
     Модель рассылки
     """
     STATUS_CHOICES = [
-        ("draft", "Черновик"),
-        ("sent", "Отправлена"),
-        ("failed", "Ошибка"),
+        ("created", "Создана"),
+        ("started", "Запущена"),
+        ("completed", "Завершена"),
     ]
+    start_time = models.DateTimeField(
+        verbose_name="Дата и время начала отправки",
+        help_text="Укажите дату и время начала рассылки"
+    )
+    end_time = models.DateTimeField(
+        verbose_name="Дата и время окончания отправки",
+        help_text="Укажите дату и время окончания рассылки"
+    )
 
     name = models.CharField(
         max_length=255,
@@ -122,4 +131,49 @@ class Mailing(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.name
+        return f"Рассылка #{self.id} - {self.message.subject}"
+
+    def clean(self):
+        """Валидация модели"""
+        errors = {}
+        if self.start_time and self.start_time < timezone.now():
+            errors['start_time'] = ValidationError(
+                'Дата и время начала не могут быть в прошлом.'
+            )
+
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            errors['end_time'] = ValidationError(
+                'Дата и время окончания должны быть позже даты начала.'
+            )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        """Переопределяем save для вызова валидации"""
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def update_status(self):
+        """Обновляет статус рассылки на основе текущего времени."""
+        now = timezone.now()
+        new_status = None
+
+        if now < self.start_time:
+            new_status = "created"
+        elif self.start_time <= now <= self.end_time:
+            new_status = "started"  #
+        else:
+            new_status = "completed"
+
+        if self.status != new_status:
+            self.status = new_status
+            self.save(update_fields=['status'])
+            return True
+        return False
+
+    def get_status_display(self):
+        """Возвращает читаемый статус"""
+        status_map = dict(self.STATUS_CHOICES)
+        return status_map.get(self.status, "Неизвестно")
