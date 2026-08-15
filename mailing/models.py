@@ -3,9 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 class Recipient(models.Model):
-    """
-    Модель получателя рассылки
-    """
+    """Модель получателя рассылки"""
     email = models.EmailField(
         unique=True,
         verbose_name="Email",
@@ -41,9 +39,7 @@ class Recipient(models.Model):
 
 
 class Message(models.Model):
-    """
-    Модель сообщения для рассылки
-    """
+    """Модель сообщения для рассылки"""
     subject = models.CharField(
         max_length=255,
         verbose_name="Тема письма",
@@ -108,7 +104,7 @@ class Mailing(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="draft",
+        default="created",
         verbose_name="Статус"
     )
     created_at = models.DateTimeField(
