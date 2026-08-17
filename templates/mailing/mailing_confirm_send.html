@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Отправить рассылку{% endblock %}
+
+{% block content %}
+<h2>Отправить рассылку "{{ mailing.name }}"</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <p><strong>Получателей:</strong> {{ mailing.recipients.count }}</p>
+        <p><strong>Сообщение:</strong> {{ mailing.message.subject }}</p>
+        <p><strong>Статус:</strong> {{ mailing.get_status_display }}</p>
+        <p><strong>Начало:</strong> {{ mailing.start_time|date:"d.m.Y H:i" }}</p>
+        <p><strong>Окончание:</strong> {{ mailing.end_time|date:"d.m.Y H:i" }}</p>
+    </div>
+</div>
+
+<p>Вы уверены, что хотите отправить эту рассылку?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-success">Отправить</button>
+    <a href="{% url 'mailing:mailing_detail' mailing.pk %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

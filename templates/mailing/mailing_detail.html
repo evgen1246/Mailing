@@ -32,8 +32,41 @@
 </div>
 
 <div class="mt-3">
+    <a href="{% url 'mailing:mailing_send' mailing.pk %}" class="btn btn-success">Отправить</a>
     <a href="{% url 'mailing:mailing_update' mailing.pk %}" class="btn btn-warning">Изменить</a>
     <a href="{% url 'mailing:mailing_delete' mailing.pk %}" class="btn btn-danger">Удалить</a>
     <a href="{% url 'mailing:mailing_list' %}" class="btn btn-secondary">Назад</a>
 </div>
+
+<hr>
+
+<h4>История попыток</h4>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Получатель</th>
+            <th>Статус</th>
+            <th>Ответ сервера</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for attempt in mailing.attempts.all|slice:":20" %}
+        <tr>
+            <td>{{ attempt.attempt_time|date:"d.m.Y H:i" }}</td>
+            <td>{{ attempt.recipient.email }}</td>
+            <td>
+                {% if attempt.status == "success" %}
+                    <span class="badge bg-success">Успешно</span>
+                {% else %}
+                    <span class="badge bg-danger">Не успешно</span>
+                {% endif %}
+            </td>
+            <td>{{ attempt.server_response|truncatechars:50 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center">Нет попыток отправки</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

@@ -173,3 +173,47 @@ class Mailing(models.Model):
         """Возвращает читаемый статус"""
         status_map = dict(self.STATUS_CHOICES)
         return status_map.get(self.status, "Неизвестно")
+
+
+class MailingAttempt(models.Model):
+    """Модель попытки отправки рассылки"""
+
+    STATUS_CHOICES = [
+        ("success", "Успешно"),
+        ("failed", "Не успешно"),
+    ]
+
+    mailing = models.ForeignKey(
+        Mailing,
+        on_delete=models.CASCADE,
+        verbose_name="Рассылка",
+        related_name="attempts"
+    )
+    recipient = models.ForeignKey(
+        Recipient,
+        on_delete=models.CASCADE,
+        verbose_name="Получатель",
+        related_name="attempts"
+    )
+    attempt_time = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата и время попытки"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        verbose_name="Статус"
+    )
+    server_response = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Ответ почтового сервера"
+    )
+
+    class Meta:
+        verbose_name = "Попытка рассылки"
+        verbose_name_plural = "Попытки рассылок"
+        ordering = ["-attempt_time"]
+
+    def __str__(self):
+        return f"Попытка #{self.id} - {self.mailing.name} - {self.get_status_display()}"

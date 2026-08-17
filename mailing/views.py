@@ -1,9 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib import messages
 from .models import Recipient, Message, Mailing
 from .forms import RecipientForm, MessageForm, MailingForm
+from .services import send_mailing
+
 
 
 #Получатели
@@ -103,3 +106,27 @@ class MailingDeleteView(LoginRequiredMixin, DeleteView):
         obj = super().get_object(queryset)
         obj.update_status()
         return obj
+
+
+class MailingSendView(LoginRequiredMixin, DetailView):
+    """Запуск рассылки вручную"""
+    model = Mailing
+    template_name = "mailing/mailing_confirm_send.html"
+    context_object_name = "mailing"
+
+    def post(self, request, *args, **kwargs):
+        mailing = self.get_object()
+        result = send_mailing(mailing)
+
+        if "error" in result:
+            messages.error(request, result["error"])
+        else:
+            messages.success(
+                request,
+                f"Рассылка отправлена! Успешно: {result['success']}, Ошибок: {result['failed']}"
+            )
+            if result["errors"]:
+                for error in result["errors"][:3]:  # Показываем первые 3 ошибки
+                    messages.warning(request, error)
+
+        return redirect("mailing:mailing_detail", pk=mailing.pk)
