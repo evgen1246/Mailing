@@ -1,11 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.contrib import messages
 from .models import Recipient, Message, Mailing
 from .forms import RecipientForm, MessageForm, MailingForm
 from .services import send_mailing
+from django.utils import timezone
 
 
 
@@ -130,3 +131,46 @@ class MailingSendView(LoginRequiredMixin, DetailView):
                     messages.warning(request, error)
 
         return redirect("mailing:mailing_detail", pk=mailing.pk)
+
+
+class IndexView(LoginRequiredMixin, TemplateView):
+    """Главная страница со статистикой"""
+    template_name = "mailing/index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        now = timezone.now()
+
+        # Общее количество всех рассылок
+        total_mailings = Mailing.objects.count()
+
+        # Количество активных рассылок
+        # Активная: текущая дата между start_time и end_time И статус "started"
+        active_mailings = Mailing.objects.filter(
+            start_time__lte=now,
+            end_time__gte=now,
+            status="started"
+        ).count()
+
+        # Количество уникальных получателей
+        total_recipients = Recipient.objects.count()
+
+        # Дополнительно: количество завершённых и созданных (для статистики)
+        completed_mailings = Mailing.objects.filter(status="completed").count()
+        created_mailings = Mailing.objects.filter(status="created").count()
+
+        # Последние 5 рассылок (для отображения на главной)
+        recent_mailings = Mailing.objects.order_by("-created_at")[:5]
+
+        context.update({
+            "total_mailings": total_mailings,
+            "active_mailings": active_mailings,
+            "total_recipients": total_recipients,
+            "completed_mailings": completed_mailings,
+            "created_mailings": created_mailings,
+            "recent_mailings": recent_mailings,
+            "now": now,
+        })
+
+        return context

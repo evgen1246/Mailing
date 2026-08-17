@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - Рассылки{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <h3>{{ total_mailings }}</h3>
+                <p class="mb-0">Всего рассылок</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <h3>{{ active_mailings }}</h3>
+                <p class="mb-0">Активных рассылок</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-warning text-dark">
+            <div class="card-body">
+                <h3>{{ created_mailings }}</h3>
+                <p class="mb-0">Созданных</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-secondary text-white">
+            <div class="card-body">
+                <h3>{{ total_recipients }}</h3>
+                <p class="mb-0">Получателей</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Последние рассылки</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_mailings %}
+                    <table class="table table-bordered table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Статус</th>
+                                <th>Дата</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mailing in recent_mailings %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'mailing:mailing_detail' mailing.pk %}">
+                                        {{ mailing.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if mailing.status == "created" %}
+                                        <span class="badge bg-secondary">Создана</span>
+                                    {% elif mailing.status == "started" %}
+                                        <span class="badge bg-success">Запущена</span>
+                                    {% elif mailing.status == "completed" %}
+                                        <span class="badge bg-danger">Завершена</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ mailing.created_at|date:"d.m.Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-muted">Нет рассылок</p>
+                {% endif %}
+                <a href="{% url 'mailing:mailing_list' %}" class="btn btn-sm btn-primary">Все рассылки</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Быстрые действия</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'mailing:recipient_create' %}" class="btn btn-primary">
+                        + Добавить получателя
+                    </a>
+                    <a href="{% url 'mailing:message_create' %}" class="btn btn-primary">
+                        + Создать сообщение
+                    </a>
+                    <a href="{% url 'mailing:mailing_create' %}" class="btn btn-success">
+                        + Создать рассылку
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
