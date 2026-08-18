@@ -1,8 +1,8 @@
-from django.contrib.auth.views import LogoutView, LoginView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
-from .apps import UsersConfig
-from . import views
 
+from . import views
+from .apps import UsersConfig
 
 app_name = UsersConfig.name
 

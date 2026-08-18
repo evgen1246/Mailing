@@ -1,33 +1,18 @@
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils import timezone
+
 
 class Recipient(models.Model):
     """Модель получателя рассылки"""
-    email = models.EmailField(
-        unique=True,
-        verbose_name="Email",
-        help_text="Введите email получателя"
-    )
-    full_name = models.CharField(
-        max_length=255,
-        verbose_name="Ф.И.О.",
-        help_text="Введите Ф.И.О. получателя"
-    )
+
+    email = models.EmailField(unique=True, verbose_name="Email", help_text="Введите email получателя")
+    full_name = models.CharField(max_length=255, verbose_name="Ф.И.О.", help_text="Введите Ф.И.О. получателя")
     comment = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="Комментарий",
-        help_text="Введите комментарий (необязательно)"
+        blank=True, null=True, verbose_name="Комментарий", help_text="Введите комментарий (необязательно)"
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата создания"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Дата обновления"
-    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
 
     class Meta:
         verbose_name = "Получатель"
@@ -40,23 +25,11 @@ class Recipient(models.Model):
 
 class Message(models.Model):
     """Модель сообщения для рассылки"""
-    subject = models.CharField(
-        max_length=255,
-        verbose_name="Тема письма",
-        help_text="Введите тему письма"
-    )
-    body = models.TextField(
-        verbose_name="Тело письма",
-        help_text="Введите текст письма"
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата создания"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Дата обновления"
-    )
+
+    subject = models.CharField(max_length=255, verbose_name="Тема письма", help_text="Введите тему письма")
+    body = models.TextField(verbose_name="Тело письма", help_text="Введите текст письма")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
 
     class Meta:
         verbose_name = "Сообщение"
@@ -68,58 +41,29 @@ class Message(models.Model):
 
 
 class Mailing(models.Model):
-    """
-    Модель рассылки
-    """
+    """Модель рассылки"""
+
     STATUS_CHOICES = [
         ("created", "Создана"),
         ("started", "Запущена"),
         ("completed", "Завершена"),
     ]
     start_time = models.DateTimeField(
-        verbose_name="Дата и время начала отправки",
-        help_text="Укажите дату и время начала рассылки"
+        verbose_name="Дата и время начала отправки", help_text="Укажите дату и время начала рассылки"
     )
     end_time = models.DateTimeField(
-        verbose_name="Дата и время окончания отправки",
-        help_text="Укажите дату и время окончания рассылки"
+        verbose_name="Дата и время окончания отправки", help_text="Укажите дату и время окончания рассылки"
     )
 
-    name = models.CharField(
-        max_length=255,
-        verbose_name="Название рассылки",
-        help_text="Введите название рассылки"
-    )
-    recipients = models.ManyToManyField(
-        Recipient,
-        verbose_name="Получатели",
-        help_text="Выберите получателей"
-    )
+    name = models.CharField(max_length=255, verbose_name="Название рассылки", help_text="Введите название рассылки")
+    recipients = models.ManyToManyField(Recipient, verbose_name="Получатели", help_text="Выберите получателей")
     message = models.ForeignKey(
-        Message,
-        on_delete=models.CASCADE,
-        verbose_name="Сообщение",
-        help_text="Выберите сообщение"
+        Message, on_delete=models.CASCADE, verbose_name="Сообщение", help_text="Выберите сообщение"
     )
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default="created",
-        verbose_name="Статус"
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата создания"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Дата обновления"
-    )
-    sent_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        verbose_name="Дата отправки"
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="created", verbose_name="Статус")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    sent_at = models.DateTimeField(blank=True, null=True, verbose_name="Дата отправки")
 
     class Meta:
         verbose_name = "Рассылка"
@@ -133,14 +77,10 @@ class Mailing(models.Model):
         """Валидация модели"""
         errors = {}
         if self.start_time and self.start_time < timezone.now():
-            errors['start_time'] = ValidationError(
-                'Дата и время начала не могут быть в прошлом.'
-            )
+            errors["start_time"] = ValidationError("Дата и время начала не могут быть в прошлом.")
 
         if self.start_time and self.end_time and self.start_time >= self.end_time:
-            errors['end_time'] = ValidationError(
-                'Дата и время окончания должны быть позже даты начала.'
-            )
+            errors["end_time"] = ValidationError("Дата и время окончания должны быть позже даты начала.")
 
         if errors:
             raise ValidationError(errors)
@@ -165,7 +105,7 @@ class Mailing(models.Model):
 
         if self.status != new_status:
             self.status = new_status
-            self.save(update_fields=['status'])
+            self.save(update_fields=["status"])
             return True
         return False
 
@@ -183,32 +123,13 @@ class MailingAttempt(models.Model):
         ("failed", "Не успешно"),
     ]
 
-    mailing = models.ForeignKey(
-        Mailing,
-        on_delete=models.CASCADE,
-        verbose_name="Рассылка",
-        related_name="attempts"
-    )
+    mailing = models.ForeignKey(Mailing, on_delete=models.CASCADE, verbose_name="Рассылка", related_name="attempts")
     recipient = models.ForeignKey(
-        Recipient,
-        on_delete=models.CASCADE,
-        verbose_name="Получатель",
-        related_name="attempts"
+        Recipient, on_delete=models.CASCADE, verbose_name="Получатель", related_name="attempts"
     )
-    attempt_time = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата и время попытки"
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        verbose_name="Статус"
-    )
-    server_response = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="Ответ почтового сервера"
-    )
+    attempt_time = models.DateTimeField(auto_now_add=True, verbose_name="Дата и время попытки")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, verbose_name="Статус")
+    server_response = models.TextField(blank=True, null=True, verbose_name="Ответ почтового сервера")
 
     class Meta:
         verbose_name = "Попытка рассылки"

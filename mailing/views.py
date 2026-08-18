@@ -1,16 +1,16 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
-from django.contrib import messages
-from .models import Recipient, Message, Mailing
-from .forms import RecipientForm, MessageForm, MailingForm
-from .services import send_mailing
 from django.utils import timezone
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
+
+from .forms import MailingForm, MessageForm, RecipientForm
+from .models import Mailing, Message, Recipient
+from .services import send_mailing
 
 
-
-#Получатели
+# Получатели
 class RecipientListView(LoginRequiredMixin, ListView):
     model = Recipient
     template_name = "mailing/recipient_list.html"
@@ -37,7 +37,8 @@ class RecipientDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("mailing:recipient_list")
 
 
-#Сообщения
+# Сообщения
+
 
 class MessageListView(LoginRequiredMixin, ListView):
     model = Message
@@ -65,7 +66,8 @@ class MessageDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("mailing:message_list")
 
 
-#Рассылки
+# Рассылки
+
 
 class MailingListView(LoginRequiredMixin, ListView):
     model = Mailing
@@ -111,6 +113,7 @@ class MailingDeleteView(LoginRequiredMixin, DeleteView):
 
 class MailingSendView(LoginRequiredMixin, DetailView):
     """Запуск рассылки вручную"""
+
     model = Mailing
     template_name = "mailing/mailing_confirm_send.html"
     context_object_name = "mailing"
@@ -122,10 +125,7 @@ class MailingSendView(LoginRequiredMixin, DetailView):
         if "error" in result:
             messages.error(request, result["error"])
         else:
-            messages.success(
-                request,
-                f"Рассылка отправлена! Успешно: {result['success']}, Ошибок: {result['failed']}"
-            )
+            messages.success(request, f"Рассылка отправлена! Успешно: {result['success']}, Ошибок: {result['failed']}")
             if result["errors"]:
                 for error in result["errors"][:3]:  # Показываем первые 3 ошибки
                     messages.warning(request, error)
@@ -133,44 +133,32 @@ class MailingSendView(LoginRequiredMixin, DetailView):
         return redirect("mailing:mailing_detail", pk=mailing.pk)
 
 
-class IndexView(LoginRequiredMixin, TemplateView):
+class IndexView(TemplateView):
     """Главная страница со статистикой"""
+
     template_name = "mailing/index.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         now = timezone.now()
-
-        # Общее количество всех рассылок
         total_mailings = Mailing.objects.count()
-
-        # Количество активных рассылок
-        # Активная: текущая дата между start_time и end_time И статус "started"
-        active_mailings = Mailing.objects.filter(
-            start_time__lte=now,
-            end_time__gte=now,
-            status="started"
-        ).count()
-
-        # Количество уникальных получателей
+        active_mailings = Mailing.objects.filter(start_time__lte=now, end_time__gte=now, status="started").count()
         total_recipients = Recipient.objects.count()
-
-        # Дополнительно: количество завершённых и созданных (для статистики)
         completed_mailings = Mailing.objects.filter(status="completed").count()
         created_mailings = Mailing.objects.filter(status="created").count()
-
-        # Последние 5 рассылок (для отображения на главной)
         recent_mailings = Mailing.objects.order_by("-created_at")[:5]
 
-        context.update({
-            "total_mailings": total_mailings,
-            "active_mailings": active_mailings,
-            "total_recipients": total_recipients,
-            "completed_mailings": completed_mailings,
-            "created_mailings": created_mailings,
-            "recent_mailings": recent_mailings,
-            "now": now,
-        })
+        context.update(
+            {
+                "total_mailings": total_mailings,
+                "active_mailings": active_mailings,
+                "total_recipients": total_recipients,
+                "completed_mailings": completed_mailings,
+                "created_mailings": created_mailings,
+                "recent_mailings": recent_mailings,
+                "now": now,
+            }
+        )
 
         return context
