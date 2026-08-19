@@ -1,4 +1,8 @@
 from django.conf import settings
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth import authenticate, login
 from django.core.mail import send_mail
 
@@ -8,11 +12,41 @@ class UserService:
 
     @staticmethod
     def register_user(request, form):
-        """Регистрация пользователя"""
-        user = form.save()
+        """
+        Регистрация пользователя с отправкой письма для подтверждения email
+        """
+        user = form.save(commit=False)
+        user.is_active = False  # Пользователь неактивен до подтверждения
+        user.save()
 
-        # Отправка приветственного письма
-        UserService._send_welcome_email(user)
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        activation_url = request.build_absolute_uri(
+            reverse(
+                "users:activate",
+                kwargs={"uidb64": uid, "token": token},
+            )
+        )
+
+
+        send_mail(
+            subject="Подтверждение регистрации",
+            message=f"""
+    Здравствуйте!
+
+    Для подтверждения регистрации на сайте перейдите по ссылке:
+    {activation_url}
+
+    Если вы не регистрировались, проигнорируйте это письмо.
+
+    С уважением,
+    Команда сервиса рассылок
+                """,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
 
         return user
 

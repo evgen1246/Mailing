@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -64,6 +65,15 @@ class Mailing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
     sent_at = models.DateTimeField(blank=True, null=True, verbose_name="Дата отправки")
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="Владелец",
+        related_name="mailings",
+        null=True,
+        blank=True
+    )
 
     class Meta:
         verbose_name = "Рассылка"

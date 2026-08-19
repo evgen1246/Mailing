@@ -52,3 +52,25 @@ def send_mailing(mailing):
         mailing.save(update_fields=["status"])
 
     return {"success": success_count, "failed": failed_count, "errors": errors}
+
+
+class StatisticsService:
+    """Сервис для сбора статистики"""
+
+    @staticmethod
+    def get_user_statistics(user):
+        """Получает статистику для пользователя"""
+
+        mailings = user.mailings.all()
+        attempts = MailingAttempt.objects.filter(mailing__in=mailings)
+        successful_attempts = attempts.filter(status='success').count()
+        failed_attempts = attempts.filter(status='failed').count()
+
+
+        sent_messages = successful_attempts
+
+        return {
+            'successful_attempts': successful_attempts,
+            'failed_attempts': failed_attempts,
+            'sent_messages': sent_messages,
+        }

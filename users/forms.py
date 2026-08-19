@@ -40,6 +40,7 @@ class CustomUserCreationForm(UserCreationForm):
         return user
 
 
+
 class CustomAuthenticationForm(AuthenticationForm):
     """Форма входа"""
 

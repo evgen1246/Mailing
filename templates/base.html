@@ -15,6 +15,7 @@
                 <a class="nav-link" href="{% url 'mailing:recipient_list' %}">Получатели</a>
                 <a class="nav-link" href="{% url 'mailing:message_list' %}">Сообщения</a>
                 <a class="nav-link" href="{% url 'mailing:mailing_list' %}">Рассылки</a>
+                <a class="nav-link" href="{% url 'mailing:statistics' %}">Статистика</a>
             </div>
             <div class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
@@ -26,6 +27,8 @@
                 {% else %}
                     <a class="nav-link" href="{% url 'users:register' %}">Регистрация</a>
                     <a class="nav-link" href="{% url 'users:login' %}">Войти</a>
+                    <a href="{% url 'users:password_reset' %}">Забыли пароль?</a>
+
                 {% endif %}
             </div>
         </div>

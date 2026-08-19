@@ -7,7 +7,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, T
 
 from .forms import MailingForm, MessageForm, RecipientForm
 from .models import Mailing, Message, Recipient
-from .services import send_mailing
+from .services import send_mailing, StatisticsService
 
 
 # Получатели
@@ -161,4 +161,14 @@ class IndexView(TemplateView):
             }
         )
 
+        return context
+
+
+class StatisticsView(LoginRequiredMixin, TemplateView):
+    """Страница со статистикой"""
+    template_name = "mailing/statistics.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['stats'] = StatisticsService.get_user_statistics(self.request.user)
         return context
