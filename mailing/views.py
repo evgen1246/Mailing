@@ -270,3 +270,4 @@ class UserBlockView(LoginRequiredMixin, UpdateView):
         status = "заблокирован" if self.object.is_blocked else "разблокирован"
         messages.success(request, f"Пользователь {self.object.email} {status}.")
         return redirect("users:user_list")
+

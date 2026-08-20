@@ -1,11 +1,13 @@
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
-from django.views.generic import CreateView, View
+from django.views import View
+from django.views.generic import CreateView
 
 from .forms import CustomAuthenticationForm, CustomUserCreationForm
 from .models import User
@@ -20,9 +22,9 @@ class RegisterView(CreateView):
 
     def form_valid(self, form):
         UserService.register_user(self.request, form)
-
         messages.success(
-            self.request, "Регистрация прошла успешно! " "На вашу почту отправлено письмо с ссылкой для подтверждения."
+            self.request,
+            "Регистрация прошла успешно! На вашу почту отправлено письмо с ссылкой для подтверждения."
         )
         return super().form_valid(form)
 
@@ -32,7 +34,6 @@ class CustomLoginView(LoginView):
     template_name = "users/login.html"
 
     def form_valid(self, form):
-
         user = form.get_user()
         if not user.is_active:
             messages.error(self.request, "Ваш email не подтверждён. Проверьте почту и перейдите по ссылке.")
@@ -41,20 +42,24 @@ class CustomLoginView(LoginView):
         return super().form_valid(form)
 
 
-class CustomLogoutView(LogoutView):
+class CustomLogoutView(View):
     def get(self, request, *args, **kwargs):
+        logout(request)
         messages.success(request, "Вы вышли из системы.")
-        return super().get(request, *args, **kwargs)
+        return redirect("/")
+
+    def post(self, request, *args, **kwargs):  # ← POST вместо GET
+        logout(request)
+        messages.success(request, "Вы вышли из системы.")
+        return redirect("/")
 
 
 class ActivateView(View):
-    """Активация пользователя по токену"""
-
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = get_object_or_404(User, pk=uid)
-        except TypeError, ValueError, OverflowError, User.DoesNotExist:
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
 
         if user is not None and default_token_generator.check_token(user, token):
