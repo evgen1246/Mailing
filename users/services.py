@@ -1,10 +1,10 @@
 from django.conf import settings
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
-from django.urls import reverse
-from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 
 class UserService:
@@ -19,7 +19,6 @@ class UserService:
         user.is_active = False  # Пользователь неактивен до подтверждения
         user.save()
 
-
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         activation_url = request.build_absolute_uri(
@@ -28,7 +27,6 @@ class UserService:
                 kwargs={"uidb64": uid, "token": token},
             )
         )
-
 
         send_mail(
             subject="Подтверждение регистрации",

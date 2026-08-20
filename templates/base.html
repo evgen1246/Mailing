@@ -16,6 +16,9 @@
                 <a class="nav-link" href="{% url 'mailing:message_list' %}">Сообщения</a>
                 <a class="nav-link" href="{% url 'mailing:mailing_list' %}">Рассылки</a>
                 <a class="nav-link" href="{% url 'mailing:statistics' %}">Статистика</a>
+                {% if user.is_superuser or user.groups.filter.name == 'Менеджеры' %}
+                    <a class="nav-link" href="{% url 'users:user_list' %}">Пользователи</a>
+                {% endif %}
             </div>
             <div class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}

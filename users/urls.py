@@ -1,5 +1,8 @@
-from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
+from django.urls import path, reverse_lazy
+
+from mailing.views import UserBlockView, UserListView
+
 from . import views
 from .apps import UsersConfig
 
@@ -41,4 +44,6 @@ urlpatterns = [
         ),
         name="password_reset_complete",
     ),
+    path("users/", UserListView.as_view(), name="user_list"),
+    path("users/<int:pk>/block/", UserBlockView.as_view(), name="user_block"),
 ]

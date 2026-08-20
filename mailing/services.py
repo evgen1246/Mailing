@@ -63,14 +63,13 @@ class StatisticsService:
 
         mailings = user.mailings.all()
         attempts = MailingAttempt.objects.filter(mailing__in=mailings)
-        successful_attempts = attempts.filter(status='success').count()
-        failed_attempts = attempts.filter(status='failed').count()
-
+        successful_attempts = attempts.filter(status="success").count()
+        failed_attempts = attempts.filter(status="failed").count()
 
         sent_messages = successful_attempts
 
         return {
-            'successful_attempts': successful_attempts,
-            'failed_attempts': failed_attempts,
-            'sent_messages': sent_messages,
+            "successful_attempts": successful_attempts,
+            "failed_attempts": failed_attempts,
+            "sent_messages": sent_messages,
         }

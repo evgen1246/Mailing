@@ -1,12 +1,13 @@
-from django.views.generic import CreateView, View
-from django.urls import reverse_lazy
-from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib import messages
-from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.views import LoginView, LogoutView
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
 from django.utils.encoding import force_str
-from .forms import CustomUserCreationForm, CustomAuthenticationForm
+from django.utils.http import urlsafe_base64_decode
+from django.views.generic import CreateView, View
+
+from .forms import CustomAuthenticationForm, CustomUserCreationForm
 from .models import User
 from .services import UserService
 
@@ -21,9 +22,7 @@ class RegisterView(CreateView):
         UserService.register_user(self.request, form)
 
         messages.success(
-            self.request,
-            "Регистрация прошла успешно! "
-            "На вашу почту отправлено письмо с ссылкой для подтверждения."
+            self.request, "Регистрация прошла успешно! " "На вашу почту отправлено письмо с ссылкой для подтверждения."
         )
         return super().form_valid(form)
 
@@ -36,10 +35,7 @@ class CustomLoginView(LoginView):
 
         user = form.get_user()
         if not user.is_active:
-            messages.error(
-                self.request,
-                "Ваш email не подтверждён. Проверьте почту и перейдите по ссылке."
-            )
+            messages.error(self.request, "Ваш email не подтверждён. Проверьте почту и перейдите по ссылке.")
             return redirect("users:login")
         messages.success(self.request, "Вы успешно вошли в систему!")
         return super().form_valid(form)
@@ -58,7 +54,7 @@ class ActivateView(View):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = get_object_or_404(User, pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        except TypeError, ValueError, OverflowError, User.DoesNotExist:
             user = None
 
         if user is not None and default_token_generator.check_token(user, token):

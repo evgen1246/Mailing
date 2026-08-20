@@ -1,6 +1,9 @@
-from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils import timezone
 
 
@@ -14,6 +17,14 @@ class Recipient(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="Владелец",
+        related_name="recipients",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = "Получатель"
@@ -31,6 +42,14 @@ class Message(models.Model):
     body = models.TextField(verbose_name="Тело письма", help_text="Введите текст письма")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    owner = models.ForeignKey(  # ← ДОБАВЛЕНО
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="Владелец",
+        related_name="messages",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = "Сообщение"
@@ -55,7 +74,6 @@ class Mailing(models.Model):
     end_time = models.DateTimeField(
         verbose_name="Дата и время окончания отправки", help_text="Укажите дату и время окончания рассылки"
     )
-
     name = models.CharField(max_length=255, verbose_name="Название рассылки", help_text="Введите название рассылки")
     recipients = models.ManyToManyField(Recipient, verbose_name="Получатели", help_text="Выберите получателей")
     message = models.ForeignKey(
@@ -65,14 +83,16 @@ class Mailing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
     sent_at = models.DateTimeField(blank=True, null=True, verbose_name="Дата отправки")
-
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name="Владелец",
         related_name="mailings",
         null=True,
-        blank=True
+        blank=True,
+    )
+    is_disabled = models.BooleanField(
+        default=False, verbose_name="Отключена", help_text="Отключить рассылку (менеджер)"
     )
 
     class Meta:
@@ -84,32 +104,26 @@ class Mailing(models.Model):
         return f"Рассылка #{self.id} - {self.message.subject}"
 
     def clean(self):
-        """Валидация модели"""
         errors = {}
         if self.start_time and self.start_time < timezone.now():
             errors["start_time"] = ValidationError("Дата и время начала не могут быть в прошлом.")
-
         if self.start_time and self.end_time and self.start_time >= self.end_time:
             errors["end_time"] = ValidationError("Дата и время окончания должны быть позже даты начала.")
-
         if errors:
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        """Переопределяем save для вызова валидации"""
-
         self.full_clean()
         super().save(*args, **kwargs)
 
     def update_status(self):
-        """Обновляет статус рассылки на основе текущего времени."""
         now = timezone.now()
         new_status = None
 
         if now < self.start_time:
             new_status = "created"
         elif self.start_time <= now <= self.end_time:
-            new_status = "started"  #
+            new_status = "started"
         else:
             new_status = "completed"
 
@@ -120,7 +134,6 @@ class Mailing(models.Model):
         return False
 
     def get_status_display(self):
-        """Возвращает читаемый статус"""
         status_map = dict(self.STATUS_CHOICES)
         return status_map.get(self.status, "Неизвестно")
 
@@ -148,3 +161,10 @@ class MailingAttempt(models.Model):
 
     def __str__(self):
         return f"Попытка #{self.id} - {self.mailing.name} - {self.get_status_display()}"
+
+
+@receiver(post_save, sender=Mailing)
+@receiver(post_delete, sender=Mailing)
+def clear_cache(sender, instance, **kwargs):
+    """Очищает кеш при изменении рассылки"""
+    cache.delete(f"stats_{instance.owner_id}")
