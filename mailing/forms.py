@@ -1,6 +1,7 @@
 from django import forms
 from django.utils import timezone
-from .models import Recipient, Message, Mailing
+
+from .models import Mailing, Message, Recipient
 
 
 class RecipientForm(forms.ModelForm):
@@ -27,7 +28,7 @@ class MessageForm(forms.ModelForm):
 class MailingForm(forms.ModelForm):
     class Meta:
         model = Mailing
-        fields = ["start_time", "end_time", "message", "recipients"]
+        fields = ["name", "start_time", "end_time", "message", "recipients"]
         widgets = {
             "start_time": forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}),
             "end_time": forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}),

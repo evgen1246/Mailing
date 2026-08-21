@@ -35,6 +35,11 @@
     <a href="{% url 'mailing:mailing_send' mailing.pk %}" class="btn btn-success">Отправить</a>
     <a href="{% url 'mailing:mailing_update' mailing.pk %}" class="btn btn-warning">Изменить</a>
     <a href="{% url 'mailing:mailing_delete' mailing.pk %}" class="btn btn-danger">Удалить</a>
+    {% if perms.mailing.can_disable_mailings or user.is_superuser %}
+        <a href="{% url 'mailing:mailing_disable' mailing.pk %}" class="btn {% if mailing.is_disabled %}btn-success{% else %}btn-warning{% endif %}">
+            {% if mailing.is_disabled %}Включить{% else %}Отключить{% endif %}
+        </a>
+    {% endif %}
     <a href="{% url 'mailing:mailing_list' %}" class="btn btn-secondary">Назад</a>
 </div>
 

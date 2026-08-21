@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Редактирование{% else %}Новый получатель{% endif %}{% endblock %}
+{% block title %}Удаление получателя{% endblock %}
 
 {% block content %}
-<h2>{% if object %}Редактирование{% else %}Новый получатель{% endif %}</h2>
+<h2>Удалить получателя?</h2>
+<p>Вы уверены, что хотите удалить <strong>{{ recipient.full_name }}</strong>?</p>
 
 <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Сохранить</button>
+    <button type="submit" class="btn btn-danger">Да, удалить</button>
     <a href="{% url 'mailing:recipient_list' %}" class="btn btn-secondary">Отмена</a>
 </form>
 {% endblock %}

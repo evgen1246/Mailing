@@ -1,6 +1,7 @@
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
 from django.utils import timezone
+
 from .models import MailingAttempt
 
 
@@ -33,20 +34,14 @@ def send_mailing(mailing):
             )
 
             MailingAttempt.objects.create(
-                mailing=mailing,
-                recipient=recipient,
-                status="success",
-                server_response="Письмо отправлено успешно"
+                mailing=mailing, recipient=recipient, status="success", server_response="Письмо отправлено успешно"
             )
             success_count += 1
 
         except Exception as e:
             error_text = str(e)
             MailingAttempt.objects.create(
-                mailing=mailing,
-                recipient=recipient,
-                status="failed",
-                server_response=error_text
+                mailing=mailing, recipient=recipient, status="failed", server_response=error_text
             )
             failed_count += 1
             errors.append(f"{recipient.email}: {error_text}")
@@ -56,8 +51,25 @@ def send_mailing(mailing):
         mailing.status = "started"
         mailing.save(update_fields=["status"])
 
-    return {
-        "success": success_count,
-        "failed": failed_count,
-        "errors": errors
-    }
+    return {"success": success_count, "failed": failed_count, "errors": errors}
+
+
+class StatisticsService:
+    """Сервис для сбора статистики"""
+
+    @staticmethod
+    def get_user_statistics(user):
+        """Получает статистику для пользователя"""
+
+        mailings = user.mailings.all()
+        attempts = MailingAttempt.objects.filter(mailing__in=mailings)
+        successful_attempts = attempts.filter(status="success").count()
+        failed_attempts = attempts.filter(status="failed").count()
+
+        sent_messages = successful_attempts
+
+        return {
+            "successful_attempts": successful_attempts,
+            "failed_attempts": failed_attempts,
+            "sent_messages": sent_messages,
+        }
